@@ -1,19 +1,18 @@
-# Sol&Siembra Dashboard
+# Sol & Siembra Monorepo
 
-Frontend en React + TypeScript + Vite para el panel "Sol&Siembra". Incluye Tailwind CSS, Recharts y datos mock que simulan sensores, energía y configuraciones.
+Este repositorio agrupa tres piezas principales del proyecto:
 
-## Requisitos
+- `frontend/`: aplicación web React (Vite + Tailwind) para el dashboard.
+- `backend/`: servidor Express que expone APIs/WS y actúa como puente con la ESP32.
+- `firmware/`: código y documentación del microcontrolador ESP32.
 
-- Node.js 18+
-- npm 9+ (o pnpm/yarn si lo prefieres)
+## Cómo trabajar
 
-## Instalación y uso
+1. **Frontend**
+   - Ve a `frontend/` y sigue las instrucciones del `README.md` para instalar dependencias y correr el dashboard.
+2. **Backend**
+   - En `backend/` tienes la API local (Express). Instala dependencias y corre `npm run dev` para exponer los endpoints en `http://localhost:4000`.
+3. **Firmware**
+   - Ve a `firmware/` para trabajar el código de la ESP32, diagramas y scripts de carga.
 
-```bash
-npm install      # instala dependencias
-npm run dev      # levanta el servidor de desarrollo
-npm run build    # compila la versión de producción
-npm run preview  # sirve la compilación
-```
-
-Todo el contenido es mock; no existen llamadas reales a APIs. Ajusta los datos en `src/mock/mockData.ts` según tus pruebas.
+Este layout facilita mantener sincronizados el UI y el firmware dentro del mismo repositorio.

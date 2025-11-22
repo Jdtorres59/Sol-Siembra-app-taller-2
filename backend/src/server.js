@@ -25,6 +25,20 @@ const broadcast = (event, payload) => {
 
 const findZone = (zoneId) => db.irrigationZones.find((zone) => zone.id === zoneId);
 
+const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
+
+// Calibración básica: valores crudos típicos para seco y mojado.
+const DRY_POINT = 3800; // tierra muy seca (puedes ajustarlo)
+const WET_POINT = 1200; // sensor sumergido/tierras muy húmedas (ajustable)
+
+// Convierte la lectura cruda a porcentaje 0-100% (0% = muy seco, 100% = muy húmedo) usando la ventana calibrada.
+const normalizeHumidity = (raw) => {
+  const clamped = clamp(raw, 0, 4095);
+  const span = Math.max(100, DRY_POINT - WET_POINT); // evita división por cero
+  const pct = ((DRY_POINT - clamped) / span) * 100;
+  return clamp(Number(pct.toFixed(1)), 0, 100);
+};
+
 const recalcAverageHumidity = () => {
   const avg =
     db.irrigationZones.reduce((sum, zone) => sum + zone.humidity, 0) / db.irrigationZones.length;
@@ -125,15 +139,21 @@ app.post('/api/esp32/lecturas', (req, res) => {
   if (!zone) {
     return res.status(404).json({ message: 'Zona no encontrada' });
   }
-  zone.humidity = humedad;
+  const humidityPct = normalizeHumidity(Number(humedad));
+  zone.humidity = humidityPct;
   zone.lastIrrigation = new Date().toISOString();
-  zone.status = humedad < zone.targetRange[0] ? 'Riesgo de estrés hídrico' : humedad > zone.targetRange[1] ? 'Encharcado' : 'OK';
+  zone.status =
+    humidityPct < zone.targetRange[0]
+      ? 'Riesgo de estrés hídrico'
+      : humidityPct > zone.targetRange[1]
+        ? 'Encharcado'
+        : 'OK';
   recalcAverageHumidity();
   const history = db.zoneHistory.find((entry) => entry.zoneId === zoneId);
   if (history) {
     history.readings.push({
       date: new Date().toISOString().slice(0, 10),
-      humidity: humedad,
+      humidity: humidityPct,
       waterUsed: Math.round(Math.random() * 10 + 20),
     });
     history.readings = history.readings.slice(-7);
